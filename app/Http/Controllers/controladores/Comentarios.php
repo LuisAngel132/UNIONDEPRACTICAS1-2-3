@@ -17,22 +17,34 @@ class Comentarios extends Controller
       tokenCan('administrador')){
         $persona2=0;
         $persona3=0;
+        $persona6=0;
+        $persona8=0;
         $persona2=DB::table('usuarios')
         ->join('personas', 'usuarios.id', '=', 'personas.usuario')
         ->select('personas.usuario','personas.id')
         ->Where('usuarios.correo', $request->user()->correo)->get();
         $persona3=DB::table('usuarios')
-        ->join('personas', 'usuarios.id', '=', 'personas.usuario')
-        ->join('productos', 'personas.id', '=', 'productos.persona')
-        ->select('personas.usuario','personas.id')
-        ->Where('usuarios.correo', $request->user()->correo)->get();
-        $request->validate([
-                'titulo'=>'required',
-                'comentario'=>'required',
-                'persona'=>'numeric|required',
-                'producto'=>'numeric|required',
-                 ]);
-                 
+                  ->join('personas', 'usuarios.id', '=', 'personas.usuario')
+                  ->join('productos', 'personas.id', '=', 'productos.persona')
+                  ->select('productos.id')
+                  ->Where('usuarios.correo', $request->user()->correo)->get(); 
+        $longitud = count($persona2);
+        foreach($persona2 as $value)
+        {
+          $persona8=$value->id;
+        }
+       
+      if( $persona8==$request->persona)
+  {
+
+
+          $request->validate([
+            'titulo'=>'required',
+            'comentario'=>'required',
+            'persona'=>'numeric|required',
+            'producto'=>'numeric|required',
+             ]);
+             
         $Comentario=new Comentario;
         $Comentario->titulo=$request->titulo;
         $Comentario->comentario=$request->comentario;
@@ -40,40 +52,79 @@ class Comentarios extends Controller
         $Comentario->producto=$request->producto;
         $Comentario->save();
         $name=$request->user()->correo;
-
+        
         $persona = DB::table('usuarios')
         ->join('personas', 'usuarios.id', '=', 'personas.usuario')
         ->select('usuarios.correo', 'personas.*')
-       ->Where('personas.id', $request->persona)->get();
-       $persona2 = DB::table('usuarios')
-       ->join('personas', 'usuarios.id', '=', 'personas.usuario')
-       ->join('productos', 'personas.id', '=', 'productos.persona')
-       ->select('usuarios.correo', 'personas.*','productos.*')
-      ->Where('productos.id', $request->producto)->get();
-     foreach($persona as $value){
-$correo1=$value->correo;
-$sujeto=$value->nombre;
-     }
-     foreach($persona2 as $value){
-      $correo2=$value->correo;
-$producto=$value->producto;
-    }
-       $this->correoconcomentarios($correo1,$correo2,$producto,$sujeto);
-       return response()->json([$Comentario],200);
+        ->Where('personas.id', $request->persona)->get();
+        $persona2 = DB::table('usuarios')
+        ->join('personas', 'usuarios.id', '=', 'personas.usuario')
+        ->join('productos', 'personas.id', '=', 'productos.persona')
+        ->select('usuarios.correo', 'personas.*','productos.*')
+        ->Where('productos.id', $request->producto)->get();
+
+        foreach($persona as $value){
+        $correo1=$value->correo;
+        $sujeto=$value->nombre;
+        }
+        foreach($persona2 as $value){
+        $correo2=$value->correo;
+        $producto=$value->producto;
+        }
+        $this->correoconcomentarios($correo1,$correo2,$producto,$sujeto);
+
+        return response()->json([$Comentario,],200);
+
+      }
+
+   
+ 
+  
+
+ 
 
 
+                
+       
+  return response()->json(["no se puede completar la accion",],400);
+
+      
         }
         $name=$request->user()->correo;
+     
         $this->enviarcorreo($name);
     
         
         return response()->json(["no tiene los permisos requeridos para la siguiente accion",],400);
     
             }
-            public function actualizarComentario(Request $request,$id){
+
+///////////////////////////////////////////////////////////////////////////////////
+ public function actualizarComentario(Request $request,$id){
                 if  ($request->user()->tokenCan('cliente')||$request->user()->
                 tokenCan('administrador')){
-                    $request->validate([
+                  $persona2=0;
+                  $persona3=0;
+                  $persona6=0;
+                  $persona8=0;
+                  $persona2=DB::table('usuarios')
+                  ->join('personas', 'usuarios.id', '=', 'personas.usuario')
+                  ->join('comentarios', 'personas.id', '=', 'comentarios.persona')
+
+                  ->select('personas.usuario','comentarios.id')
+                  ->Where('usuarios.correo', $request->user()->correo)->get();
+                 
+                  $longitud = count($persona2);
+                  for ($i = 0; $i <$longitud; $i++) {
+                  
+                   
+                  foreach($persona2 as $value)
+                  {
+                    $persona8=$value->id;
+                    if( $persona8==$id)
+            {
+                              
+                  $request->validate([
                         'titulo'=>'required',
                         'comentario'=>'required',
                        
@@ -102,6 +153,13 @@ $producto=$value->producto;
     $this->actualizaciondecomentarioconcorreo($correo1,$correo2,$producto,$sujeto);
         return response()->json([$Comentario,],200);
                 }
+                  }
+                 
+                
+              }
+                return response()->json(["el comentario no le pertenece",],400);
+
+              }
                 $name=$request->user()->correo;
                 $this->enviarcorreo($name);
             
@@ -156,41 +214,65 @@ $producto=$value->producto;
                     
                     }              
             public function eliminarComentario(Request $request,$id){
-                if  ($request->user()->tokenCan('cliente')||$request->user()->tokenCan('administrador')){  
-          {
-        $Comentario=Comentario::find($id);
-      
-        $persona = DB::table('usuarios')
-        ->join('personas', 'usuarios.id', '=', 'personas.usuario')
-        ->select('usuarios.correo', 'personas.*')
-       ->Where('personas.id', $Comentario->persona)->get();
-       $persona2 = DB::table('usuarios')
-       ->join('personas', 'usuarios.id', '=', 'personas.usuario')
-       ->join('productos', 'personas.id', '=', 'productos.persona')
-       ->select('usuarios.correo', 'personas.*','productos.*')
-      ->Where('productos.id', $Comentario->producto)->get();
-     foreach($persona as $value){
-$correo1=$value->correo;
-$sujeto=$value->nombre;
-     }
-     foreach($persona2 as $value){
-      $correo2=$value->correo;
-$producto=$value->producto;
-    }
-        $Comentario->delete();
-        $Comentario=Comentario::all();
-       $this-> eliminaciondecomentarioconcorreo($correo1,$correo2,$producto,$sujeto);
-        return response()->json([$Comentario],200);
-          }
-         
-    }
-    $name=$request->user()->correo;
-    $this->enviarcorreo($name);
+                if  ($request->user()->tokenCan('cliente')||$request->
+                user()->tokenCan('administrador')){  
+    $persona2=0;
+    $persona3=0;
+    $persona6=0;
+    $persona8=0;
+    $persona3=DB::table('usuarios')
+    ->join('personas', 'usuarios.id', '=', 'personas.usuario')
+    ->join('comentarios', 'personas.id', '=', 'comentarios.persona')
 
+    ->select('personas.usuario','comentarios.id')
+    ->Where('usuarios.correo', $request->user()->correo)->get();
+   
+    $longitud = count($persona3);
+    for ($i = 0; $i <$longitud+1; $i++) {
     
-    return response()->json(["no tiene los permisos requeridos para la siguiente accion",],400);
+     
+    foreach($persona3 as $value)
+    {
+      $persona8=$value->id;
+      if( $persona8==$id)
+{
+  $Comentario=Comentario::find($id);
+  $persona = DB::table('usuarios')
+  ->join('personas', 'usuarios.id', '=', 'personas.usuario')
+  ->select('usuarios.correo', 'personas.*')
+ ->Where('personas.id', $Comentario->persona)->get();
+ $persona2 = DB::table('usuarios')
+ ->join('personas', 'usuarios.id', '=', 'personas.usuario')
+ ->join('productos', 'personas.id', '=', 'productos.persona')
+ ->select('usuarios.correo', 'personas.*','productos.*')
+->Where('productos.id', $Comentario->producto)->get();
+foreach($persona as $value){
+  $correo1=$value->correo;
+  $sujeto=$value->nombre;
+       }
+       foreach($persona2 as $value){
+        $correo2=$value->correo;
+  $producto=$value->producto;
+      }
+      $Comentario->delete();
+      $Comentario=Comentario::all();
+      $this->eliminaciondecomentarioconcorreo($correo1,$correo2,$producto,$sujeto);
+      return response()->json([$Comentario,],200);
 
 }
+    }
+    return response()->json(["no te pertenece el comentario",],400);
+
+  }///
+  
+}
+$name=$request->user()->correo;
+  $this->enviarcorreo($name);
+
+  
+  return response()->json(["no tiene los permisos requeridos para la siguiente accion",],400);
+            }
+        
 public function enviarcorreo($name){
   $correoadministrador=config('app.mjadministrador');
 
